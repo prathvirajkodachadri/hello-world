@@ -1,0 +1,1 @@
+window.addEventListener('scroll',()=>{document.querySelector('.header').style.background=window.scrollY>20?'#081b33':'#081b33';});

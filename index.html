@@ -1,61 +1,597 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lumina Technologies</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pneumatic Circuit Visual</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root{
+      --bg:#09111f;
+      --panel:#0f1b31;
+      --panel2:#132441;
+      --line:#7fd3ff;
+      --line2:#3aa7ff;
+      --text:#eaf4ff;
+      --muted:#9ab7d3;
+      --green:#42e38a;
+      --yellow:#ffd166;
+      --red:#ff6b6b;
+      --cyan:#7cecff;
+      --steel:#d9e3f0;
+      --shadow:0 18px 40px rgba(0,0,0,.35);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Inter,Segoe UI,Arial,sans-serif;
+      background:
+        radial-gradient(circle at 20% 10%, rgba(64,173,255,.12), transparent 32%),
+        radial-gradient(circle at 80% 0%, rgba(124,236,255,.10), transparent 28%),
+        linear-gradient(180deg,#07101d,#0a1426 50%,#08101c);
+      color:var(--text);
+      min-height:100vh;
+    }
+    .wrap{
+      max-width:1400px;
+      margin:0 auto;
+      padding:20px;
+      display:grid;
+      grid-template-columns: 1.8fr .95fr;
+      gap:20px;
+    }
+    .card{
+      background:linear-gradient(180deg, rgba(20,34,61,.92), rgba(11,21,38,.92));
+      border:1px solid rgba(140,190,255,.18);
+      border-radius:22px;
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      backdrop-filter:blur(8px);
+    }
+    .header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+      padding:16px 18px;
+      border-bottom:1px solid rgba(140,190,255,.12);
+      background:linear-gradient(180deg, rgba(255,255,255,.03), transparent);
+    }
+    .title{
+      font-size:18px;
+      font-weight:700;
+      letter-spacing:.2px;
+    }
+    .sub{
+      font-size:12px;
+      color:var(--muted);
+      margin-top:3px;
+    }
+    .status-pill{
+      padding:8px 12px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:700;
+      letter-spacing:.4px;
+      border:1px solid rgba(255,255,255,.1);
+      background:rgba(255,255,255,.04);
+      color:var(--cyan);
+    }
+    .schematic{
+      padding:12px;
+    }
+    svg{
+      width:100%;
+      height:auto;
+      display:block;
+      border-radius:18px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.015), rgba(255,255,255,0)),
+        radial-gradient(circle at 50% 0%, rgba(124,236,255,.08), transparent 50%),
+        linear-gradient(180deg,#0c1629,#08111f);
+      border:1px solid rgba(140,190,255,.12);
+    }
+    .side{
+      display:grid;
+      grid-template-rows:auto auto 1fr;
+      gap:20px;
+    }
+    .controls, .chart-card, .states{
+      padding:18px;
+    }
+    .controls-grid{
+      display:grid;
+      gap:14px;
+    }
+    .btn-row{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    button{
+      border:0;
+      border-radius:14px;
+      padding:11px 14px;
+      color:#fff;
+      font-weight:700;
+      cursor:pointer;
+      background:linear-gradient(180deg, #1f7cff, #155ecc);
+      box-shadow:0 10px 24px rgba(31,124,255,.25);
+    }
+    button.secondary{
+      background:linear-gradient(180deg,#24354f,#1a2940);
+      box-shadow:none;
+      border:1px solid rgba(140,190,255,.12);
+      color:#dbeaff;
+    }
+    .range-wrap{
+      display:grid;
+      gap:8px;
+    }
+    label{
+      font-size:12px;
+      color:var(--muted);
+      font-weight:700;
+      letter-spacing:.4px;
+    }
+    input[type="range"]{
+      width:100%;
+      accent-color:#58b8ff;
+    }
+    .reading{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      font-size:13px;
+      color:#dcebff;
+      background:rgba(255,255,255,.03);
+      border:1px solid rgba(140,190,255,.1);
+      border-radius:14px;
+      padding:10px 12px;
+    }
+    .states-grid{
+      display:grid;
+      gap:10px;
+    }
+    .state{
+      display:grid;
+      grid-template-columns:14px 1fr auto;
+      align-items:center;
+      gap:10px;
+      padding:11px 12px;
+      border-radius:14px;
+      background:rgba(255,255,255,.03);
+      border:1px solid rgba(140,190,255,.10);
+    }
+    .dot{
+      width:10px;height:10px;border-radius:50%;
+      background:#516781;
+      box-shadow:0 0 0 0 rgba(255,255,255,0);
+      transition:.25s;
+    }
+    .dot.on{background:var(--green); box-shadow:0 0 14px rgba(66,227,138,.6)}
+    .dot.warn{background:var(--yellow); box-shadow:0 0 14px rgba(255,209,102,.6)}
+    .state b{font-size:13px}
+    .state span{font-size:12px;color:var(--muted)}
+    .chart-wrap{
+      position:relative;
+      height:240px;
+    }
+    .legend-note{
+      margin-top:8px;
+      font-size:11px;
+      color:var(--muted);
+      text-align:right;
+    }
+    @media (max-width: 1080px){
+      .wrap{grid-template-columns:1fr}
+    }
+  </style>
 </head>
 <body>
-<header class="header">
-<div class="container">
-<div class="logo">Lumina <span>Technologies</span></div>
-<nav>
-<a href="#">Home</a>
-<a href="#about">About</a>
-<a href="#products">Products</a>
-<a href="#contact">Contact</a>
-</nav>
-</div>
-</header>
+  <div class="wrap">
+    <div class="card">
+      <div class="header">
+        <div>
+          <div class="title">Pneumatic Circuit</div>
+          <div class="sub">Air Supply (Ø3/8") → Shut-off Valve → Filter Pressure Regulator (SMC AW30-03G-A) → Mist Separator (SMC AM350C-03B-T) → Pressure Switch → Pneumatic Equipment</div>
+        </div>
+        <div class="status-pill" id="flowStatus">FLOW STOPPED</div>
+      </div>
+      <div class="schematic">
+        <svg viewBox="0 0 1280 560" aria-label="Pneumatic circuit schematic">
+          <defs>
+            <linearGradient id="pipeGlow" x1="0" x2="1">
+              <stop offset="0%" stop-color="#9fe8ff"/>
+              <stop offset="100%" stop-color="#3aa7ff"/>
+            </linearGradient>
+            <linearGradient id="steel" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stop-color="#f2f7fd"/>
+              <stop offset="100%" stop-color="#bccbdc"/>
+            </linearGradient>
+            <filter id="softGlow">
+              <feGaussianBlur stdDeviation="3" result="b"/>
+              <feMerge>
+                <feMergeNode in="b"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+            <filter id="panelShadow" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="12" stdDeviation="12" flood-color="#000" flood-opacity=".35"/>
+            </filter>
+          </defs>
 
-<section class="hero">
-<div class="overlay"></div>
-<div class="hero-content">
-<h1>Engineering Tomorrow Through Precision & Innovation</h1>
-<p>Original demo homepage for Lumina Technologies.</p>
-<a class="btn" href="#products">Explore Products</a>
-</div>
-</section>
+          <rect x="10" y="10" width="1260" height="540" rx="22" fill="rgba(255,255,255,.02)" stroke="rgba(140,190,255,.08)"/>
 
-<section id="about" class="section">
-<div class="container">
-<h2>About Us</h2>
-<p>Lumina Technologies delivers engineering, automation and manufacturing solutions with a modern approach.</p>
-</div>
-</section>
+          <!-- base pipe -->
+          <path id="mainPipe" d="M90 280 H1190" fill="none" stroke="#193555" stroke-width="28" stroke-linecap="round"/>
+          <path d="M90 280 H1190" fill="none" stroke="url(#pipeGlow)" stroke-width="12" stroke-linecap="round" filter="url(#softGlow)"/>
 
-<section id="products" class="section alt">
-<div class="container">
-<h2>Products</h2>
-<div class="cards">
-<div class="card"><h3>CNC Machines</h3><p>High precision machining solutions.</p></div>
-<div class="card"><h3>Automation</h3><p>Industrial automation systems.</p></div>
-<div class="card"><h3>Engineering</h3><p>Custom engineering services.</p></div>
-</div>
-</div>
-</section>
+          <!-- flow arrows -->
+          <g opacity=".18">
+            <path d="M170 280 l20 -10 v20 z" fill="#9fe8ff"/>
+            <path d="M345 280 l20 -10 v20 z" fill="#9fe8ff"/>
+            <path d="M560 280 l20 -10 v20 z" fill="#9fe8ff"/>
+            <path d="M815 280 l20 -10 v20 z" fill="#9fe8ff"/>
+            <path d="M1040 280 l20 -10 v20 z" fill="#9fe8ff"/>
+          </g>
 
-<section id="contact" class="section">
-<div class="container">
-<h2>Contact</h2>
-<p>Email: info@luminatechnologies.example</p>
-</div>
-</section>
+          <!-- air supply -->
+          <g transform="translate(50,180)" filter="url(#panelShadow)">
+            <rect x="0" y="0" width="120" height="200" rx="20" fill="#0e1e35" stroke="rgba(140,190,255,.18)"/>
+            <rect x="26" y="40" width="68" height="108" rx="28" fill="url(#steel)" opacity=".95"/>
+            <rect x="36" y="52" width="48" height="84" rx="20" fill="#dfe9f7"/>
+            <path d="M44 120 q16 -10 22 0 t22 0" fill="none" stroke="#6fb8ff" stroke-width="3"/>
+            <circle cx="60" cy="84" r="6" fill="#6fb8ff"/>
+            <rect x="44" y="22" width="32" height="20" rx="6" fill="url(#steel)"/>
+            <text x="60" y="168" text-anchor="middle" fill="#eaf4ff" font-size="16" font-weight="700">AIR</text>
+            <text x="60" y="188" text-anchor="middle" fill="#9ab7d3" font-size="12">Ø3/8"</text>
+          </g>
 
-<footer>© 2026 Lumina Technologies</footer>
-<script src="assets/js/script.js"></script>
+          <!-- shut-off valve -->
+          <g id="valveGroup" transform="translate(220,180)" style="cursor:pointer" filter="url(#panelShadow)">
+            <rect x="0" y="0" width="140" height="200" rx="20" fill="#0e1e35" stroke="rgba(140,190,255,.18)"/>
+            <rect x="30" y="72" width="80" height="56" rx="16" fill="#1b3154" stroke="#93cfff" stroke-width="2"/>
+            <path id="valveBlade" d="M40 118 L100 82" stroke="#d9e3f0" stroke-width="8" stroke-linecap="round"/>
+            <circle cx="70" cy="100" r="8" fill="#d9e3f0"/>
+            <path d="M72 60 L114 36" stroke="#ff9258" stroke-width="8" stroke-linecap="round"/>
+            <circle cx="118" cy="34" r="10" fill="#ff9258"/>
+            <text x="70" y="165" text-anchor="middle" fill="#eaf4ff" font-size="16" font-weight="700">SHUT-OFF</text>
+            <text x="70" y="185" text-anchor="middle" fill="#9ab7d3" font-size="12">Valve</text>
+          </g>
+
+          <!-- regulator/filter -->
+          <g transform="translate(410,130)" filter="url(#panelShadow)">
+            <rect x="0" y="0" width="260" height="250" rx="22" fill="#0e1e35" stroke="rgba(140,190,255,.18)"/>
+            <text x="130" y="28" text-anchor="middle" fill="#eaf4ff" font-size="18" font-weight="700">FILTER PRESSURE REGULATOR</text>
+            <text x="130" y="48" text-anchor="middle" fill="#9ab7d3" font-size="12">SMC AW30-03G-A · Rc 3/8" · 0.05–0.85 MPa</text>
+
+            <circle cx="68" cy="98" r="34" fill="#162a49" stroke="#9fd7ff" stroke-width="2"/>
+            <circle cx="68" cy="98" r="24" fill="#f4f8fd"/>
+            <line id="gaugeNeedle" x1="68" y1="98" x2="84" y2="82" stroke="#ff6b6b" stroke-width="4" stroke-linecap="round"/>
+            <circle cx="68" cy="98" r="4" fill="#1c3155"/>
+            <text x="68" y="145" text-anchor="middle" fill="#9ab7d3" font-size="11">GAUGE</text>
+
+            <rect x="112" y="74" width="52" height="26" rx="8" fill="#314f79" stroke="#9fd7ff"/>
+            <rect x="128" y="48" width="20" height="26" rx="6" fill="#5a87c6"/>
+            <rect x="104" y="104" width="68" height="86" rx="18" fill="url(#steel)"/>
+            <rect x="116" y="120" width="44" height="42" rx="8" fill="#d7e4f3"/>
+            <path d="M120 128 H156 M120 138 H156 M120 148 H156" stroke="#8ea7c1" stroke-width="2"/>
+            <path d="M138 166 v16" stroke="#7ab9ff" stroke-width="3" stroke-linecap="round"/>
+
+            <text x="138" y="216" text-anchor="middle" fill="#9ab7d3" font-size="11">FILTER + REGULATOR</text>
+            <rect x="186" y="82" width="48" height="18" rx="6" fill="#1f7cff" opacity=".7"/>
+            <text id="regText" x="210" y="162" text-anchor="middle" fill="#eaf4ff" font-size="28" font-weight="800">6.0</text>
+            <text x="210" y="186" text-anchor="middle" fill="#9ab7d3" font-size="12">bar set</text>
+          </g>
+
+          <!-- mist separator -->
+          <g transform="translate(720,130)" filter="url(#panelShadow)">
+            <rect x="0" y="0" width="220" height="250" rx="22" fill="#0e1e35" stroke="rgba(140,190,255,.18)"/>
+            <text x="110" y="28" text-anchor="middle" fill="#eaf4ff" font-size="18" font-weight="700">MIST SEPARATOR</text>
+            <text x="110" y="48" text-anchor="middle" fill="#9ab7d3" font-size="12">SMC AM350C-03B-T · Rc 3/8" · 0.05–1.0 MPa</text>
+
+            <rect x="76" y="76" width="68" height="112" rx="18" fill="url(#steel)"/>
+            <rect x="88" y="92" width="44" height="50" rx="10" fill="#dce7f4"/>
+            <path d="M92 98 q18 10 36 0" stroke="#95abc3" stroke-width="2" fill="none"/>
+            <path d="M92 110 q18 10 36 0" stroke="#95abc3" stroke-width="2" fill="none"/>
+            <path d="M92 122 q18 10 36 0" stroke="#95abc3" stroke-width="2" fill="none"/>
+            <circle cx="98" cy="156" r="3" fill="#7fd3ff"/>
+            <circle cx="110" cy="162" r="3" fill="#7fd3ff"/>
+            <circle cx="121" cy="170" r="3" fill="#7fd3ff"/>
+            <path d="M110 188 v16" stroke="#7ab9ff" stroke-width="3" stroke-linecap="round"/>
+            <text x="110" y="216" text-anchor="middle" fill="#9ab7d3" font-size="11">COALESCING ELEMENT</text>
+          </g>
+
+          <!-- pressure switch -->
+          <g transform="translate(990,170)" filter="url(#panelShadow)">
+            <rect x="0" y="0" width="130" height="170" rx="20" fill="#0e1e35" stroke="rgba(140,190,255,.18)"/>
+            <rect x="30" y="48" width="70" height="54" rx="12" fill="#20385d" stroke="#9fd7ff"/>
+            <circle id="switchLamp" cx="65" cy="75" r="10" fill="#4d5e75"/>
+            <path d="M42 118 h46" stroke="#d9e3f0" stroke-width="4" stroke-linecap="round"/>
+            <path id="switchArm" d="M65 118 L92 94" stroke="#d9e3f0" stroke-width="4" stroke-linecap="round"/>
+            <text x="65" y="142" text-anchor="middle" fill="#eaf4ff" font-size="16" font-weight="700">PRESSURE</text>
+            <text x="65" y="160" text-anchor="middle" fill="#9ab7d3" font-size="12">SWITCH</text>
+          </g>
+
+          <!-- equipment -->
+          <g transform="translate(1150,150)" filter="url(#panelShadow)">
+            <rect x="0" y="0" width="90" height="210" rx="20" fill="#0e1e35" stroke="rgba(140,190,255,.18)"/>
+            <rect x="16" y="80" width="58" height="42" rx="10" fill="#dfe8f5"/>
+            <rect id="cylinderRod" x="58" y="96" width="24" height="10" rx="4" fill="#98abc1"/>
+            <rect x="12" y="86" width="14" height="30" rx="4" fill="#a5b7c9"/>
+            <path d="M24 102 H8" stroke="#d9e3f0" stroke-width="5" stroke-linecap="round"/>
+            <text x="45" y="154" text-anchor="middle" fill="#eaf4ff" font-size="15" font-weight="700">PNEUMATIC</text>
+            <text x="45" y="172" text-anchor="middle" fill="#9ab7d3" font-size="12">EQUIPMENT</text>
+          </g>
+
+          <!-- labels under pipe -->
+          <g fill="#84a7c9" font-size="12" text-anchor="middle">
+            <text x="290" y="408">Manual isolation</text>
+            <text x="540" y="408">Set outlet pressure + filtration</text>
+            <text x="830" y="408">Remove oil/water mist</text>
+            <text x="1055" y="408">Output signal</text>
+            <text x="1195" y="408">Actuator / load</text>
+          </g>
+
+          <!-- pressure bubbles -->
+          <g>
+            <rect x="88" y="235" width="92" height="32" rx="16" fill="rgba(6,15,28,.75)" stroke="rgba(140,190,255,.12)"/>
+            <text id="pSupply" x="134" y="256" text-anchor="middle" fill="#9fe8ff" font-size="16" font-weight="800">7.0 bar</text>
+
+            <rect x="514" y="235" width="110" height="32" rx="16" fill="rgba(6,15,28,.75)" stroke="rgba(140,190,255,.12)"/>
+            <text id="pReg" x="569" y="256" text-anchor="middle" fill="#9fe8ff" font-size="16" font-weight="800">6.0 bar</text>
+
+            <rect x="790" y="235" width="110" height="32" rx="16" fill="rgba(6,15,28,.75)" stroke="rgba(140,190,255,.12)"/>
+            <text id="pMist" x="845" y="256" text-anchor="middle" fill="#9fe8ff" font-size="16" font-weight="800">5.9 bar</text>
+
+            <rect x="1136" y="235" width="100" height="32" rx="16" fill="rgba(6,15,28,.75)" stroke="rgba(140,190,255,.12)"/>
+            <text id="pEquip" x="1186" y="256" text-anchor="middle" fill="#9fe8ff" font-size="16" font-weight="800">5.9 bar</text>
+          </g>
+
+          <!-- flow particles -->
+          <g id="particles"></g>
+        </svg>
+      </div>
+    </div>
+
+    <div class="side">
+      <div class="card controls">
+        <div class="title">Controls</div>
+        <div class="sub" style="margin-bottom:14px;">Click valve on schematic or use controls.</div>
+        <div class="controls-grid">
+          <div class="btn-row">
+            <button id="runBtn">Start Air</button>
+            <button id="valveBtn" class="secondary">Toggle Valve</button>
+          </div>
+          <div class="range-wrap">
+            <label for="regulator">REGULATOR SET PRESSURE</label>
+            <input id="regulator" type="range" min="0.5" max="8.5" step="0.1" value="6.0"/>
+            <div class="reading"><span>Setpoint</span><strong id="regulatorValue">6.0 bar</strong></div>
+          </div>
+          <div class="range-wrap">
+            <label for="switchThreshold">PRESSURE SWITCH THRESHOLD</label>
+            <input id="switchThreshold" type="range" min="1.0" max="7.0" step="0.1" value="4.0"/>
+            <div class="reading"><span>Switch ON above</span><strong id="switchValue">4.0 bar</strong></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card chart-card">
+        <div class="title">Live Pressure Profile</div>
+        <div class="sub" style="margin-bottom:10px;">Supply / regulated / separator outlet / equipment</div>
+        <div class="chart-wrap">
+          <canvas id="pressureChart"></canvas>
+        </div>
+        <div class="legend-note">bar</div>
+      </div>
+
+      <div class="card states">
+        <div class="title">Live States</div>
+        <div class="sub" style="margin-bottom:14px;">Visual status only</div>
+        <div class="states-grid">
+          <div class="state"><div id="dotAir" class="dot"></div><div><b>Air Supply</b><br><span id="txtAir">Stopped</span></div><strong id="vAir">0.0</strong></div>
+          <div class="state"><div id="dotValve" class="dot"></div><div><b>Shut-off Valve</b><br><span id="txtValve">Closed</span></div><strong id="vValve">—</strong></div>
+          <div class="state"><div id="dotReg" class="dot"></div><div><b>Regulator</b><br><span id="txtReg">Set pressure</span></div><strong id="vReg">0.0</strong></div>
+          <div class="state"><div id="dotMist" class="dot"></div><div><b>Mist Separator</b><br><span id="txtMist">No flow</span></div><strong id="vMist">0.0</strong></div>
+          <div class="state"><div id="dotSwitch" class="dot"></div><div><b>Pressure Switch</b><br><span id="txtSwitch">OFF</span></div><strong id="vSwitch">0.0</strong></div>
+          <div class="state"><div id="dotEquip" class="dot"></div><div><b>Pneumatic Equipment</b><br><span id="txtEquip">Idle</span></div><strong id="vEquip">0.0</strong></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const state = {
+      running: false,
+      valveOpen: true,
+      supplyBar: 7.0,
+      setBar: 6.0,
+      threshold: 4.0,
+      pReg: 0,
+      pMist: 0,
+      pEquip: 0,
+      particles: []
+    };
+
+    const el = id => document.getElementById(id);
+    const particlesGroup = el('particles');
+    const mainPipe = el('mainPipe');
+
+    function createParticles(){
+      for(let i=0;i<18;i++){
+        const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
+        c.setAttribute('r', 4 + (i % 3));
+        c.setAttribute('fill', i % 2 ? '#9fe8ff' : '#58c5ff');
+        c.setAttribute('opacity', '.95');
+        c.style.filter = 'url(#softGlow)';
+        particlesGroup.appendChild(c);
+        state.particles.push({node:c, t:i/18, speed:0.0018 + Math.random()*0.0015});
+      }
+    }
+    createParticles();
+
+    function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+    function lerp(a,b,t){ return a + (b-a)*t; }
+
+    const chart = new Chart(el('pressureChart'), {
+      type: 'line',
+      data: {
+        labels: ['Supply','Valve','Regulated','Mist Sep.','Equipment'],
+        datasets: [{
+          label:'Pressure',
+          data:[0,0,0,0,0],
+          borderColor:'#7cecff',
+          backgroundColor:'rgba(124,236,255,.18)',
+          fill:true,
+          borderWidth:3,
+          tension:.35,
+          pointRadius:4,
+          pointHoverRadius:5,
+          pointBackgroundColor:'#eaf4ff'
+        }]
+      },
+      options: {
+        responsive:true,
+        maintainAspectRatio:true,
+        animation:false,
+        plugins:{
+          legend:{display:false},
+          tooltip:{
+            backgroundColor:'#11213a',
+            borderColor:'rgba(140,190,255,.18)',
+            borderWidth:1,
+            titleColor:'#fff',
+            bodyColor:'#dcecff'
+          }
+        },
+        scales:{
+          x:{ticks:{color:'#aac6e1'}, grid:{color:'rgba(140,190,255,.08)'}},
+          y:{
+            min:0,max:8.5,
+            ticks:{color:'#aac6e1'},
+            grid:{color:'rgba(140,190,255,.08)'}
+          }
+        }
+      }
+    });
+
+    function updateModel(){
+      const active = state.running && state.valveOpen;
+      const targetReg = active ? Math.min(state.setBar, state.supplyBar) : 0;
+      state.pReg = lerp(state.pReg, targetReg, 0.09);
+      const targetMist = active ? Math.max(0, targetReg - 0.12) : 0;
+      state.pMist = lerp(state.pMist, targetMist, 0.09);
+      const switchOn = state.pMist >= state.threshold && active;
+      const targetEquip = switchOn ? state.pMist : 0;
+      state.pEquip = lerp(state.pEquip, targetEquip, 0.11);
+
+      const ang = (-140 + (clamp(state.pReg,0,8.5)/8.5)*280) * Math.PI/180;
+      const x2 = 68 + Math.cos(ang)*22;
+      const y2 = 98 + Math.sin(ang)*22;
+      el('gaugeNeedle').setAttribute('x2', x2.toFixed(1));
+      el('gaugeNeedle').setAttribute('y2', y2.toFixed(1));
+
+      el('regText').textContent = state.setBar.toFixed(1);
+      el('pSupply').textContent = (state.running ? state.supplyBar : 0).toFixed(1) + ' bar';
+      el('pReg').textContent = state.pReg.toFixed(1) + ' bar';
+      el('pMist').textContent = state.pMist.toFixed(1) + ' bar';
+      el('pEquip').textContent = state.pEquip.toFixed(1) + ' bar';
+
+      el('switchLamp').setAttribute('fill', switchOn ? '#42e38a' : '#4d5e75');
+      el('switchLamp').style.filter = switchOn ? 'url(#softGlow)' : 'none';
+      el('switchArm').setAttribute('d', switchOn ? 'M65 118 L94 102' : 'M65 118 L92 94');
+
+      el('valveBlade').setAttribute('d', state.valveOpen ? 'M40 118 L100 82' : 'M40 82 L100 118');
+      el('flowStatus').textContent = active ? 'FLOW ACTIVE' : 'FLOW STOPPED';
+      el('flowStatus').style.color = active ? '#7effb4' : '#7cecff';
+
+      el('cylinderRod').setAttribute('x', (state.pEquip > 0.8 ? 66 : 58).toString());
+
+      chart.data.datasets[0].data = [
+        state.running ? state.supplyBar : 0,
+        active ? state.supplyBar : 0,
+        +state.pReg.toFixed(2),
+        +state.pMist.toFixed(2),
+        +state.pEquip.toFixed(2)
+      ];
+      chart.update('none');
+
+      updateStates(active, switchOn);
+    }
+
+    function setDot(id, mode){
+      const d = el(id);
+      d.className = 'dot' + (mode ? ' ' + mode : '');
+    }
+
+    function updateStates(active, switchOn){
+      setDot('dotAir', state.running ? 'on' : '');
+      setDot('dotValve', state.valveOpen ? 'warn' : '');
+      setDot('dotReg', state.pReg > 0.2 ? 'on' : '');
+      setDot('dotMist', state.pMist > 0.2 ? 'on' : '');
+      setDot('dotSwitch', switchOn ? 'on' : '');
+      setDot('dotEquip', state.pEquip > 0.4 ? 'on' : '');
+
+      el('txtAir').textContent = state.running ? 'Air available' : 'Stopped';
+      el('txtValve').textContent = state.valveOpen ? 'Open' : 'Closed';
+      el('txtReg').textContent = active ? 'Regulating' : 'No outlet pressure';
+      el('txtMist').textContent = active ? 'Separating' : 'No flow';
+      el('txtSwitch').textContent = switchOn ? 'ON' : 'OFF';
+      el('txtEquip').textContent = state.pEquip > 0.4 ? 'Actuated' : 'Idle';
+
+      el('vAir').textContent = (state.running ? state.supplyBar : 0).toFixed(1);
+      el('vValve').textContent = state.valveOpen ? 'OPEN' : 'CLOSED';
+      el('vReg').textContent = state.pReg.toFixed(1);
+      el('vMist').textContent = state.pMist.toFixed(1);
+      el('vSwitch').textContent = state.threshold.toFixed(1);
+      el('vEquip').textContent = state.pEquip.toFixed(1);
+    }
+
+    function animateParticles(){
+      const flow = state.running && state.valveOpen && state.pReg > 0.2;
+      const length = mainPipe.getTotalLength();
+      state.particles.forEach((p,i)=>{
+        if(flow){
+          p.t += p.speed * (0.8 + state.pReg/4);
+          if(p.t > 1) p.t -= 1;
+        }
+        const visibleUntil = clamp((state.pEquip > 0.2 ? 1 : (state.pMist > 0.3 ? 0.85 : (state.pReg > 0.3 ? 0.6 : 0.28))), 0.18, 1);
+        const localT = clamp(p.t * visibleUntil, 0, 1);
+        const pt = mainPipe.getPointAtLength(length * localT);
+        p.node.setAttribute('cx', pt.x);
+        p.node.setAttribute('cy', pt.y);
+        p.node.setAttribute('opacity', flow ? (0.3 + ((i%5)/8)) : 0.05);
+      });
+    }
+
+    function loop(){
+      updateModel();
+      animateParticles();
+      requestAnimationFrame(loop);
+    }
+
+    el('runBtn').addEventListener('click', ()=>{
+      state.running = !state.running;
+      el('runBtn').textContent = state.running ? 'Stop Air' : 'Start Air';
+    });
+    el('valveBtn').addEventListener('click', ()=> state.valveOpen = !state.valveOpen);
+    el('valveGroup').addEventListener('click', ()=> state.valveOpen = !state.valveOpen);
+    el('regulator').addEventListener('input', e=>{
+      state.setBar = parseFloat(e.target.value);
+      el('regulatorValue').textContent = state.setBar.toFixed(1) + ' bar';
+    });
+    el('switchThreshold').addEventListener('input', e=>{
+      state.threshold = parseFloat(e.target.value);
+      el('switchValue').textContent = state.threshold.toFixed(1) + ' bar';
+    });
+
+    state.running = true;
+    el('runBtn').textContent = 'Stop Air';
+    el('regulatorValue').textContent = state.setBar.toFixed(1) + ' bar';
+    el('switchValue').textContent = state.threshold.toFixed(1) + ' bar';
+
+    loop();
+  </script>
 </body>
 </html>
